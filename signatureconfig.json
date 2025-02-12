@@ -1,0 +1,23 @@
+{   
+    "Template" : {
+        "FolderPath":"\\yourserver\\yourfolder\\yourtemplatefolder\\",
+        "FileName":"Template.html",
+        "ImageName":"Logo.jpg"
+    },
+    "CompanyName":"Your Company",
+    "ExchangeOnline": {
+        "ApplicationID":"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "CertificateThumbprint":"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "CertificatePath":"Cert:\\LocalMachine\\My\\",
+        "TenetName":"yourcompany.onmicrosoft.com"
+    },
+    "ComputerPrefix":"yourPrefix",
+    "SearchBase":"OU=Office365Users,DC=DOMAIN,DC=yourcompany,DC=com",
+    "UseLocalOutlook":true,
+    "UseWebOutlook":true,
+    "FindComputers":true,
+    "UserCSVData" : {
+        "UseCSV":true,
+        "CSVPath":"\\yourserver\\yourfolder\\UserData.csv"
+    }
+}
