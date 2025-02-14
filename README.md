@@ -9,6 +9,8 @@ Prerequisites:
    3a. Link to instructions: [Enable Remote Registry](https://docs.recastsoftware.com/help/enable-remote-registry)
 4. WinRM needs to be enabled on remote computers\
    4a. Link to instructions: [Enable WinRM](https://support.auvik.com/hc/en-us/articles/204424994-How-to-enable-WinRM-with-domain-controller-Group-Policy-for-WMI-monitoring)
+5. Roaming Signatures needs to be disabled in Office365\
+   5a. Link to instructions: [Disable Roaming Signatures](https://petri.com/microsoft-disable-roaming-signatures-outlook/)
 
 Getting Started:
 
