@@ -3,12 +3,12 @@ Powershell script to update both local and web Outlook signatures based on AD in
 
 Prerequisites:
 1. Needs to be run from a computer with Domain Admin access, preferably the Domain Controller
-2. An App Organization needs to be created in Entra with a cerificate saved to the local store
-   2a. Link to instructions: https://learn.microsoft.com/en-us/powershell/exchange/app-only-auth-powershell-v2?view=exchange-ps
-3. Remote Registry needs to be enabled on remote computers
-   3a. Link to instructions: https://docs.recastsoftware.com/help/enable-remote-registry
-4. WinRM needs to be enabled on remote computers
-   4a. Link to instructions: https://support.auvik.com/hc/en-us/articles/204424994-How-to-enable-WinRM-with-domain-controller-Group-Policy-for-WMI-monitoring
+2. An App Organization needs to be created in Entra with a cerificate saved to the local store\
+   2a. Link to instructions: [App Only Authentication Powershell](https://learn.microsoft.com/en-us/powershell/exchange/app-only-auth-powershell-v2?view=exchange-ps)
+3. Remote Registry needs to be enabled on remote computers\
+   3a. Link to instructions: [Enable Remote Registry](https://docs.recastsoftware.com/help/enable-remote-registry)
+4. WinRM needs to be enabled on remote computers\
+   4a. Link to instructions: [Enable WinRM](https://support.auvik.com/hc/en-us/articles/204424994-How-to-enable-WinRM-with-domain-controller-Group-Policy-for-WMI-monitoring)
 
 Getting Started:
 
