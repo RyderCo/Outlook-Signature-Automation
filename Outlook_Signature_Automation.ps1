@@ -283,8 +283,9 @@ function Get-Computers {
 
     $global:Log.WriteInfo('Getting Computers')
 
+    $ComputerPrefix = $ComputerPrefix + '*'
     $recentLogonDate = (Get-Date).AddDays(-14)
-    $Computers = Get-ADComputer -Filter { Name -like "$ComputerPrefix*" -and lastLogonTimeStamp -ge $recentLogonDate } | Select-Object Name | Sort-Object Name
+    $Computers = Get-ADComputer -Filter { Name -like $ComputerPrefix -and lastLogonTimeStamp -ge $recentLogonDate } | Select-Object Name | Sort-Object Name
 
     if (($Computers | Measure).Count -eq 0) {
         $global:Log.WriteWarning('No computers found in domain')
