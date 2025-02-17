@@ -2,7 +2,7 @@
 Powershell script to update both local and web Outlook signatures based on AD information.
 
 Prerequisites:
-1. Needs to be run from a computer with Domain Admin access, preferably the Domain Controller
+1. For the local signature management, this script needs to be run on a computer that has admin access to the remote workstations in order to edit the user AppData and the registry, preferably the Domain Controller.
 2. An App Organization needs to be created in Entra with a cerificate saved to the local store\
    2a. Link to instructions: [App Only Authentication Powershell](https://learn.microsoft.com/en-us/powershell/exchange/app-only-auth-powershell-v2?view=exchange-ps)
 3. Remote Registry needs to be enabled on remote computers\
