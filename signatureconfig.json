@@ -2,7 +2,8 @@
     "Template" : {
         "FolderPath":"\\yourserver\\yourfolder\\yourtemplatefolder\\",
         "FileName":"Template.html",
-        "ImageName":"Logo.jpg"
+        "ImageName1":"Logo.jpg"
+        "ImageName2":"Banner.png"
     },
     "CompanyName":"Your Company",
     "ExchangeOnline": {
