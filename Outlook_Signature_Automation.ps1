@@ -454,8 +454,10 @@ function Create-UserSignature {
     $fImage2 = '{IMAGE2}'
     $fB64 = '{B64}'
 
-    $LocalImageHTML = "<img width=154 height=137 src=`"data:image/jpeg;base64,{B64}`" alt=`"$CompanyName`">"
-    $WebImageHTML = "<img width=154 height=137 src=`"`" alt=`"$CompanyName`"><span id=`"dataURI`" style=`"display:none`">data:image/jpeg;base64,{B64}</span>"
+    $LocalImage1HTML = "<img width=154 height=137 src=`"data:image/jpeg;base64,{B64}`" alt=`"$CompanyName`">"
+    $WebImage1HTML = "<img width=154 height=137 src=`"`" alt=`"$CompanyName`"><span id=`"dataURI`" style=`"display:none`">data:image/jpeg;base64,{B64}</span>"
+    $LocalImage2HTML = "<img src=`"data:image/jpeg;base64,{B64}`" alt=`"$CompanyName`">"
+    $WebImage2HTML = "<img src=`"`" alt=`"$CompanyName`"><span id=`"dataURI`" style=`"display:none`">data:image/jpeg;base64,{B64}</span>"
 
     $Template = Get-Content -Path "$TemplatePath$TemplateName" -RAW
     
@@ -469,8 +471,8 @@ function Create-UserSignature {
             $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$Image1Name -Encoding Byte))
         }
 
-        $LocalSignature = $UserSignature -replace $fImage1,$LocalImageHTML -replace $fB64,$Image64
-        $WebSignature = $UserSignature -replace $fImage1,$WebImageHTML -replace $fB64,$Image64
+        $LocalSignature = $UserSignature -replace $fImage1,$LocalImage1HTML -replace $fB64,$Image64
+        $WebSignature = $UserSignature -replace $fImage1,$WebImage1HTML -replace $fB64,$Image64
     } else {
         $LocalSignature = $UserSignature
         $WebSignature = $UserSignature
@@ -483,8 +485,8 @@ function Create-UserSignature {
             $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$Image2Name -Encoding Byte))
         }
 
-        $LocalSignature = $UserSignature -replace $fImage2,$LocalImageHTML -replace $fB64,$Image64
-        $WebSignature = $UserSignature -replace $fImage2,$WebImageHTML -replace $fB64,$Image64
+        $LocalSignature = $UserSignature -replace $fImage2,$LocalImage2HTML -replace $fB64,$Image64
+        $WebSignature = $UserSignature -replace $fImage2,$WebImage2HTML -replace $fB64,$Image64
     } else {
         $LocalSignature = $UserSignature
         $WebSignature = $UserSignature
