@@ -2,7 +2,7 @@
     "Template" : {
         "FolderPath":"\\yourserver\\yourfolder\\yourtemplatefolder\\",
         "FileName":"Template.html",
-        "Image1Name":"Logo.jpg"
+        "Image1Name":"Logo.jpg",
         "Image2Name":"Banner.png"
     },
     "CompanyName":"Your Company",
