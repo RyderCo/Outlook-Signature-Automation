@@ -444,13 +444,14 @@ function Filter-Users {
 }
 
 function Create-UserSignature {
-    param($TemplatePath, $User, $TemplateName, $ImageName, $CompanyName)
+    param($TemplatePath, $User, $TemplateName, $Image1Name, $Image2Name, $CompanyName)
 
     #The variables below are the placeholders used in the html file.
     $fName = '{NAME}'
     $fTitle = '{TITLE}'
     $fEmail = '{EMAIL}'
-    $fImage = '{IMAGE}'
+    $fImage1 = '{IMAGE1}'
+    $fImage2 = '{IMAGE2}'
     $fB64 = '{B64}'
 
     $LocalImageHTML = "<img width=154 height=137 src=`"data:image/jpeg;base64,{B64}`" alt=`"$CompanyName`">"
@@ -460,16 +461,30 @@ function Create-UserSignature {
     
     $UserSignature = $Template -replace $fName,$User.Name -replace $fTitle,$User.Title -replace $fEmail,$User.UPN
 
-    if ($null -ne $ImageName) {
+    if ($null -ne $Image1Name) {
         #The below code converts the image to Base64 so that the signature doesn't need to reference files. This is the only way the web signature images can function.
         if ($PSVersionTable.PSVersion.Major -ge 7) {
-            $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$ImageName -AsByteStream))
+            $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$Image1Name -AsByteStream))
         } else {
-            $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$ImageName -Encoding Byte))
+            $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$Image1Name -Encoding Byte))
         }
 
-        $LocalSignature = $UserSignature -replace $fImage,$LocalImageHTML -replace $fB64,$Image64
-        $WebSignature = $UserSignature -replace $fImage,$WebImageHTML -replace $fB64,$Image64
+        $LocalSignature = $UserSignature -replace $fImage1,$LocalImageHTML -replace $fB64,$Image64
+        $WebSignature = $UserSignature -replace $fImage1,$WebImageHTML -replace $fB64,$Image64
+    } else {
+        $LocalSignature = $UserSignature
+        $WebSignature = $UserSignature
+    }
+    if ($null -ne $Image2Name) {
+        #The below code converts the image to Base64 so that the signature doesn't need to reference files. This is the only way the web signature images can function.
+        if ($PSVersionTable.PSVersion.Major -ge 7) {
+            $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$Image2Name -AsByteStream))
+        } else {
+            $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$Image2Name -Encoding Byte))
+        }
+
+        $LocalSignature = $UserSignature -replace $fImage2,$LocalImageHTML -replace $fB64,$Image64
+        $WebSignature = $UserSignature -replace $fImage2,$WebImageHTML -replace $fB64,$Image64
     } else {
         $LocalSignature = $UserSignature
         $WebSignature = $UserSignature
@@ -629,7 +644,7 @@ if ($TestSignature) {
     $global:Log.WriteInfo('Generating Test Signatures')
 
     $TestUser = [PSCustomObject]@{ UPN = "testuser@$(($CompanyName -replace ' ','').ToLower()).com"; Title = 'Signature Tester'; Name = 'Test User'}
-    $TestUserSignature = Create-UserSignature -User $TestUser -TemplatePath $Template.FolderPath -TemplateName $Template.FileName -ImageName $Template.ImageName -CompanyName $CompanyName
+    $TestUserSignature = Create-UserSignature -User $TestUser -TemplatePath $Template.FolderPath -TemplateName $Template.FileName -Image1Name $Template.Image1Name -Image2Name $Template.Image2Name -CompanyName $CompanyName
     $LocalHtmPath = ([string]($MyInvocation.MyCommand.Path) -replace [string]($MyInvocation.MyCommand.Name),'Local_Signature_Test.htm')
     $WebHtmlPath = ([string]($MyInvocation.MyCommand.Path) -replace [string]($MyInvocation.MyCommand.Name),'Web_Signature_Test.html')
     New-Item -ItemType File -Path $LocalHtmPath -force | Out-Null
@@ -671,7 +686,7 @@ if ($TestSignature) {
     $global:Log.WriteInfo('Generating Signatures')
 
     foreach ($MUser in $MergedUsers) {
-        $MUser.UserSignature = Create-UserSignature -User $MUser -TemplatePath $Template.FolderPath -TemplateName $Template.FileName -ImageName $Template.ImageName -CompanyName $CompanyName
+        $MUser.UserSignature = Create-UserSignature -User $MUser -TemplatePath $Template.FolderPath -TemplateName $Template.FileName -Image1Name $Template.Image1Name -Image2Name $Template.Image2Name -CompanyName $CompanyName
     }
 
     $Users = Filter-Users -AllUsers $MergedUsers -FilterUsers $FilterList
