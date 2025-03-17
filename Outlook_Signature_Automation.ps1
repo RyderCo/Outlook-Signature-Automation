@@ -485,11 +485,11 @@ function Create-UserSignature {
             $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$Image2Name -Encoding Byte))
         }
 
-        $LocalSignature = $UserSignature -replace $fImage2,$LocalImage2HTML -replace $fB64,$Image64
-        $WebSignature = $UserSignature -replace $fImage2,$WebImage2HTML -replace $fB64,$Image64
+        $LocalSignature = $LocalSignature -replace $fImage2,$LocalImage2HTML -replace $fB64,$Image64
+        $WebSignature = $WebSignature -replace $fImage2,$WebImage2HTML -replace $fB64,$Image64
     } else {
-        $LocalSignature = $UserSignature
-        $WebSignature = $UserSignature
+        $LocalSignature = $LocalSignature
+        $WebSignature = $WebSignature
     }
 
     return [PSCustomObject]@{LocalSignature = $LocalSignature; WebSignature = $WebSignature}
