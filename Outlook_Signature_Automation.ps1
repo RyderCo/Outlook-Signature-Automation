@@ -80,16 +80,18 @@ $global:Log = New-Object Log -ArgumentList ([string]($MyInvocation.MyCommand.Pat
 
 #This takes the (optional) list of users and creates an object of each depending on what way the users are entered.
 $FilterList = @()
-foreach ($FUser in $FilterUsers.Split(',')) {
-    if ($FUser.Contains('@')) {
-        $UPN = $FUser
-        $SAM = ''
-    } else {
-        $UPN = ''
-        $SAM = $FUser
+if ($null -ne $FilterUsers -and $FilterUsers -ne '') {
+    foreach ($FUser in $FilterUsers.Split(',')) {
+        if ($FUser.Contains('@')) {
+            $UPN = $FUser
+            $SAM = ''
+        } else {
+            $UPN = ''
+            $SAM = $FUser
+        }
+        $UserObject = [PSCustomObject]@{ UPN = $UPN; SAM = $SAM }
+        $FilterList += $UserObject
     }
-    $UserObject = [PSCustomObject]@{ UPN = $UPN; SAM = $SAM }
-    $FilterList += $UserObject
 }
 
 
