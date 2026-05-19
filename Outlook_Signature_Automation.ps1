@@ -81,6 +81,7 @@ $global:Log = New-Object Log -ArgumentList ([string]($MyInvocation.MyCommand.Pat
 #This takes the (optional) list of users and creates an object of each depending on what way the users are entered.
 $FilterList = @()
 if ($null -ne $FilterUsers -and $FilterUsers -ne '') {
+    $FilterUsers -replace " ", ""
     foreach ($FUser in $FilterUsers.Split(',')) {
         if ($FUser.Contains('@')) {
             $UPN = $FUser
@@ -702,12 +703,13 @@ if ($TestSignature) {
             if ($UseWebOutlook) {
                 if (Connect-TenantExchange -ExchangeOnlineInfo $ExchangeOnlineInfo) {
                     Update-WebSignature -User $User -CompanyName $CompanyName
-                    Disconnect-TenanttExchange
+                    Disconnect-TenantExchange
                 }
             }
         }
 
         $global:Log.WriteInfo("$(($Users | Measure).Count) users updated")
+        Read-Host -Prompt "Press Enter to exit..."
     }
 }
 
