@@ -1,7 +1,7 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Updates Email Signatures for On-Premesis and Online Exchange Users.
+    Updates Email Signatures for On-Premises and Online Exchange Users.
 
 .DESCRIPTION
     Collects user$user data from various sources then updates the local outlook email signature and the Outlook Web App/Outlook Online email signature.
@@ -94,7 +94,6 @@ if ($null -ne $FilterUsers -and $FilterUsers -ne '') {
     }
 }
 
-
 $ConfigPath = ([string]($MyInvocation.MyCommand.Path) -replace [string]($MyInvocation.MyCommand.Name),'signatureconfig.json')
 
 if (!(Test-Path -Path $ConfigPath)) {
@@ -113,6 +112,7 @@ $CompanyName = $Config.CompanyName
 $ComputerPrefix = $Config.ComputerPrefix
 $SearchBase = $Config.SearchBase
 $FindComputers = $Config.FindComputers
+
 
 #Boolean values to evaluate which Outlook types are used
 $UseLocalOutlook = $Config.UseLocalOutlook
@@ -165,24 +165,24 @@ function Verify-Modules {
     if ((Get-Module -Name ExchangeOnlineManagement -ListAvailable).Count -eq 0) {
         Install-Module ExchangeOnlineManagement -AllowClobber -Force
     }
-    Import-Module -Name ActiveDirectory
+    Import-Module -Name ExchangeOnlineManagement
     if ((Get-Module -Name ActiveDirectory -ListAvailable).Count -eq 0) {
         Install-Module ActiveDirectory -AllowClobber -Force
     }
     Import-Module -Name ActiveDirectory
 }
 
-function Connect-TenentExchange {
+function Connect-TenantExchange {
     param ($ExchangeOnlineInfo)
 
     if ($null -eq $ExchangeOnlineInfo.ApplicationID -or
     $null -eq $ExchangeOnlineInfo.CertificateThumbprint -or
     $null -eq $ExchangeOnlineInfo.CertificatePath -or
-    $null -eq $ExchangeOnlineInfo.TenetName -or
+    $null -eq $ExchangeOnlineInfo.TenantName -or
     $ExchangeOnlineInfo.ApplicationID -eq '' -or
     $ExchangeOnlineInfo.CertificateThumbprint -eq '' -or
     $ExchangeOnlineInfo.CertificatePath -eq '' -or
-    $ExchangeOnlineInfo.TenetName -eq '') {
+    $ExchangeOnlineInfo.TenantName -eq '') {
         $global:Log.WriteError('Missing Information in ExchangeOnline config')
         Read-Host -Prompt "Press Enter To Exit"
         exit 1
@@ -192,12 +192,12 @@ function Connect-TenentExchange {
     $Certificate = Get-ChildItem "$($ExchangeOnlineInfo.CertificatePath)$($ExchangeOnlineInfo.CertificateThumbprint)"
 
     try {
-        Connect-ExchangeOnline -AppId $ExchangeOnlineInfo.ApplicationID -Certificate $Certificate -Organization $ExchangeOnlineInfo.TenetName -ShowBanner:$false -ErrorAction Stop
+        Connect-ExchangeOnline -AppId $ExchangeOnlineInfo.ApplicationID -Certificate $Certificate -Organization $ExchangeOnlineInfo.TenantName -ShowBanner:$false -ErrorAction Stop
     } catch {
         $e = $_.Exception
         $msg = $e.Message
         $global:Log.WriteError("Exception $e")
-        #$global:Log.WriteError("Error Message: $msg")
+        $global:Log.WriteError("Error Message: $msg")
     }
     if ((Get-ConnectionInformation | Select-Object Name | Where-Object {$_.Name -like 'ExchangeOnline*'} | Measure).Count -gt 0) {
         $global:Log.WriteInfo('Connection to Exchange Online Successful')
@@ -208,7 +208,7 @@ function Connect-TenentExchange {
     }
 }
 
-function Disconnect-TenetExchange {
+function Disconnect-TenantExchange {
     if ((Get-ConnectionInformation | Select-Object Name | Where-Object {$_.Name -like 'ExchangeOnline*'} | Measure).Count -gt 0) {
         Disconnect-ExchangeOnline -Confirm:$false
         $global:Log.WriteInfo('Disconnected from Exchange Online')
@@ -341,7 +341,7 @@ function Get-WebUsers {
 
     $WebUsers = @()
     
-    $UserList = $usersinfo = Get-User -Filter "RecipientType -eq 'UserMailBox' -and RecipientTypeDetails -eq 'UserMailBox'" | Select-Object -Property UserPrincipalName,DisplayName,Title | Sort-Object DisplayName
+    $UserList = Get-User -Filter "RecipientType -eq 'UserMailBox' -and RecipientTypeDetails -eq 'UserMailBox'" | Select-Object -Property UserPrincipalName,DisplayName,Title | Sort-Object DisplayName
     
     if (($UserList | Measure).Count -eq 0) {
         $global:Log.WriteWarning("No web users found")
@@ -406,7 +406,7 @@ function Merge-UserData {
             $SID = Coalesce $CSVUser.SID $LUser.SID ''
             $SAM = Coalesce $CSVUser.SAM $LUser.SAM ''
 
-            $ComputerUser = $Computer | Where-Object { $_.CurrentUser -eq $SAM -or $_.LastUser -eq $SAM }
+            $ComputerUser = $Computers | Where-Object { $_.CurrentUser -eq $SAM -or $_.LastUser -eq $SAM }
 
             $Computer = Coalesce $CSVUser.Computer $ComputerUser.Name
 
@@ -446,52 +446,39 @@ function Filter-Users {
 }
 
 function Create-UserSignature {
-    param($TemplatePath, $User, $TemplateName, $Image1Name, $Image2Name, $CompanyName)
+    param($TemplatePath, $User, $TemplateName, $CompanyName)
 
     #The variables below are the placeholders used in the html file.
     $fName = '{NAME}'
     $fTitle = '{TITLE}'
     $fEmail = '{EMAIL}'
-    $fImage1 = '{IMAGE1}'
-    $fImage2 = '{IMAGE2}'
     $fB64 = '{B64}'
+    $fSize = '{SIZE}'
 
-    $LocalImage1HTML = "<img width=154 height=137 src=`"data:image/jpeg;base64,{B64}`" alt=`"$CompanyName`">"
-    $WebImage1HTML = "<img width=154 height=137 src=`"`" alt=`"$CompanyName`"><span id=`"dataURI`" style=`"display:none`">data:image/jpeg;base64,{B64}</span>"
-    $LocalImage2HTML = "<img src=`"data:image/jpeg;base64,{B64}`" alt=`"$CompanyName`">"
-    $WebImage2HTML = "<img src=`"`" alt=`"$CompanyName`"><span id=`"dataURI`" style=`"display:none`">data:image/jpeg;base64,{B64}</span>"
+    $LocalImageHTML = "<img {SIZE} style=`"display:block`" alt=`"$CompanyName`" src=`"data:image/jpeg;base64,{B64}`" >"
+    $WebImageHTML = "<img {SIZE} alt=`"$CompanyName`" src=`"`" ><span id=`"dataURI`" style=`"display:none`">data:image/jpeg;base64,{B64}</span>"
 
     $Template = Get-Content -Path "$TemplatePath$TemplateName" -RAW
     
-    $UserSignature = $Template -replace $fName,$User.Name -replace $fTitle,$User.Title -replace $fEmail,$User.UPN
+    $LocalSignature = $WebSignature = $Template -replace $fName,$User.Name -replace $fTitle,$User.Title -replace $fEmail,$User.UPN
+    $ImageCount = 1
+    $Images = $Config.Template.Images.PSObject.Properties.Value
+    foreach ($Image in $Images) {
+        $fImage = "{IMAGE${ImageCount}}"
+        $ImageSize = $Image.Size
+        $ImageName = $Image.Name
+        if ($null -ne $Image.Name) {
+            #The below code converts the image to Base64 so that the signature doesn't need to reference files. This is the only way the web signature images can function.
+            if ($PSVersionTable.PSVersion.Major -ge 7) {
+                $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$ImageName -AsByteStream))
+            } else {
+                $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$ImageName -Encoding Byte))
+            }
 
-    if ($null -ne $Image1Name) {
-        #The below code converts the image to Base64 so that the signature doesn't need to reference files. This is the only way the web signature images can function.
-        if ($PSVersionTable.PSVersion.Major -ge 7) {
-            $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$Image1Name -AsByteStream))
-        } else {
-            $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$Image1Name -Encoding Byte))
+            $LocalSignature = $LocalSignature -replace $fImage,$LocalImageHTML -replace $fB64,$Image64 -replace $fSize,$ImageSize
+            $WebSignature = $WebSignature -replace $fImage,$WebImageHTML -replace $fB64,$Image64 -replace $fSize,$ImageSize
         }
-
-        $LocalSignature = $UserSignature -replace $fImage1,$LocalImage1HTML -replace $fB64,$Image64
-        $WebSignature = $UserSignature -replace $fImage1,$WebImage1HTML -replace $fB64,$Image64
-    } else {
-        $LocalSignature = $UserSignature
-        $WebSignature = $UserSignature
-    }
-    if ($null -ne $Image2Name) {
-        #The below code converts the image to Base64 so that the signature doesn't need to reference files. This is the only way the web signature images can function.
-        if ($PSVersionTable.PSVersion.Major -ge 7) {
-            $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$Image2Name -AsByteStream))
-        } else {
-            $Image64 = [Convert]::ToBase64String((Get-Content -Path $TemplatePath$Image2Name -Encoding Byte))
-        }
-
-        $LocalSignature = $LocalSignature -replace $fImage2,$LocalImage2HTML -replace $fB64,$Image64
-        $WebSignature = $WebSignature -replace $fImage2,$WebImage2HTML -replace $fB64,$Image64
-    } else {
-        $LocalSignature = $LocalSignature
-        $WebSignature = $WebSignature
+        $ImageCount++
     }
 
     return [PSCustomObject]@{LocalSignature = $LocalSignature; WebSignature = $WebSignature}
@@ -581,14 +568,14 @@ function Update-SignatureRegistry {
         if ($base) {
             $ProfileKey = $base.OpenSubKey($ProfilesPath)
             if ($ProfileKey) {
-                foreach ($Profile in $ProfileKey.GetSubKeyNames()) {
-                    $AccountKey = $base.OpenSubKey("$ProfilesPath$Profile\$ProfileTypeKey")
+                foreach ($ProfileSub in $ProfileKey.GetSubKeyNames()) {
+                    $AccountKey = $base.OpenSubKey("$ProfilesPath$ProfileSub\$ProfileTypeKey")
                     if ($AccountKey) {
                         foreach ($Account in $AccountKey.GetSubKeyNames()) {
-                            $SignatureKey = $base.OpenSubKey("$ProfilesPath$Profile\$ProfileTypeKey\$Account",$true)
+                            $SignatureKey = $base.OpenSubKey("$ProfilesPath$ProfileSub\$ProfileTypeKey\$Account",$true)
                             if ($SignatureKey) {
                                 $NewSignature = $SignatureKey.GetValue('New Signature')
-                                $ReplyForwardSignature = $SignatureKey.GetValue('Reply-Forward Signature')
+                                #$ReplyForwardSignature = $SignatureKey.GetValue('Reply-Forward Signature')
                                 if ($null -eq $NewSignature) {
                                     $SignatureKey.SetValue('New Signature',$SignatureName,[Microsoft.Win32.RegistryValueKind]::String)
                                 } elseif ($NewSignature -ne $SignatureName) {
@@ -648,7 +635,7 @@ if ($TestSignature) {
     $global:Log.WriteInfo('Generating Test Signatures')
 
     $TestUser = [PSCustomObject]@{ UPN = "testuser@$(($CompanyName -replace ' ','').ToLower()).com"; Title = 'Signature Tester'; Name = 'Test User'}
-    $TestUserSignature = Create-UserSignature -User $TestUser -TemplatePath $Template.FolderPath -TemplateName $Template.FileName -Image1Name $Template.Image1Name -Image2Name $Template.Image2Name -CompanyName $CompanyName
+    $TestUserSignature = Create-UserSignature -User $TestUser -TemplatePath $Template.FolderPath -TemplateName $Template.FileName -CompanyName $CompanyName
     $LocalHtmPath = ([string]($MyInvocation.MyCommand.Path) -replace [string]($MyInvocation.MyCommand.Name),'Local_Signature_Test.htm')
     $WebHtmlPath = ([string]($MyInvocation.MyCommand.Path) -replace [string]($MyInvocation.MyCommand.Name),'Web_Signature_Test.html')
     New-Item -ItemType File -Path $LocalHtmPath -force | Out-Null
@@ -675,9 +662,9 @@ if ($TestSignature) {
     }
 
     if ($UseWebOutlook) {
-        if (Connect-TenentExchange -ExchangeOnlineInfo $ExchangeOnlineInfo) {
+        if (Connect-TenantExchange -ExchangeOnlineInfo $ExchangeOnlineInfo) {
             $WebUsers = Get-WebUsers
-            Disconnect-TenetExchange
+            Disconnect-TenantExchange
         }
     }
 
@@ -690,7 +677,7 @@ if ($TestSignature) {
     $global:Log.WriteInfo('Generating Signatures')
 
     foreach ($MUser in $MergedUsers) {
-        $MUser.UserSignature = Create-UserSignature -User $MUser -TemplatePath $Template.FolderPath -TemplateName $Template.FileName -Image1Name $Template.Image1Name -Image2Name $Template.Image2Name -CompanyName $CompanyName
+        $MUser.UserSignature = Create-UserSignature -User $MUser -TemplatePath $Template.FolderPath -TemplateName $Template.FileName -CompanyName $CompanyName
     }
 
     $Users = Filter-Users -AllUsers $MergedUsers -FilterUsers $FilterList
@@ -708,14 +695,14 @@ if ($TestSignature) {
                     Disable-RoamingSignatures -User $User
                     Update-SignatureRegistry -User $User -CompanyName $CompanyName
                 } else {
-                    $global:Log.WriteError("Computer not found for $User.Name")
+                    $global:Log.WriteError("Computer not found for $($User.Name)")
                 }
             }
 
             if ($UseWebOutlook) {
-                if (Connect-TenentExchange -ExchangeOnlineInfo $ExchangeOnlineInfo) {
+                if (Connect-TenantExchange -ExchangeOnlineInfo $ExchangeOnlineInfo) {
                     Update-WebSignature -User $User -CompanyName $CompanyName
-                    Disconnect-TenetExchange
+                    Disconnect-TenanttExchange
                 }
             }
         }
